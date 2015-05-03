@@ -1,0 +1,592 @@
+Red Wine Quality Data Analysis by Paul Hsiao
+========================================================
+
+```{r packages, echo=FALSE, message=FALSE, warning=FALSE}
+library(GGally)
+library(scales)
+library(memisc)
+library(gridExtra)
+library(grid)
+library(RColorBrewer)
+library(bitops)
+library(RCurl)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r Load_the_Data, echo=FALSE}
+# Load the Data
+
+reddf <- read.csv('wineQualityReds.csv')
+reddf$quality <- factor(reddf$quality)
+# To avoid inclding the pH.bucket variable used in the scatterplot matrices, a temp variable is used to store the value. The variable is stored in dataset later on.
+tmp_pH.bucket <- cut(reddf$pH, breaks = c(2.74, 3.0, 3.25, 3.5, 3.75, 4.01))
+
+```
+## Number of observations and variables in the red wine dataset
+```{r num_oberv, echo=FALSE}
+dim(reddf)
+```
+
+## Names of variables for the red wine dataset
+```{r list_varname, echo=FALSE}
+names(reddf)
+```
+
+## Summary of the red wine dataset
+```{r show_summary, echo=FALSE}
+summary(reddf)
+```
+
+##Key observations from the summary
+1. fixed.acidity ranges from 4.60 to 15.90 with median 7.90.
+2. There are observations with zero level citric.acid.
+3. residual.sugar has max level 15.50 while 3rd Quantile has 2.6 only.
+4. chlorides has max value 0.611 which is more than 6 times of 3rd quantile value(0.9978).
+5. total.sulfur.dioxide has max value 289.00 while 3rd quantile value is 62.00 only.
+
+
+# Univariate Plots Section
+
+###Histogram for fixed.acidity
+```{r Univariate_Plots, echo=FALSE, message=FALSE, warning=FALSE}
+# fixed.acidity   
+p1 <- ggplot(aes(x=fixed.acidity), data=reddf) +
+  geom_histogram(color = 'black', fill = "#FFFF66") +
+  scale_x_continuous(breaks = seq(4, 16, 1))
+
+ggplot(aes(x=fixed.acidity, fill = quality), data=reddf) +
+  geom_histogram(color = 'black') +
+  scale_x_continuous(breaks = seq(4, 16, 1))
+
+# volatile.acidity     
+p2 <- ggplot(aes(x=volatile.acidity), data=reddf) +
+  geom_histogram(color = 'black', fill = "#CCCCCC") +
+  scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1))
+
+ggplot(aes(x=volatile.acidity, fill = quality), data=reddf) +
+  geom_histogram(color = 'black') +
+  scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1))
+
+
+# citric.acid
+p3 <- ggplot(aes(x=citric.acid ), data=reddf) +
+  geom_histogram(color = 'black', fill = "#FF9900") 
+
+ggplot(aes(x=citric.acid, fill = quality ), data=reddf) +
+  geom_histogram(color = 'black')
+
+# residual.sugar       
+p4 <- ggplot(aes(x=residual.sugar), data=reddf) +
+  geom_histogram(color = 'black', fill = "#CCFF66") +
+  scale_x_continuous(limits = c(0, 5))
+
+ggplot(aes(x=residual.sugar, fill = quality), data=reddf) +
+  geom_histogram(color = 'black') +
+  scale_x_continuous(limits = c(0, 5))
+
+# chlorides            
+p5 <- ggplot(aes(x=chlorides), data=reddf) +
+  geom_histogram(color = 'black', fill = "#FFCCCC") 
+
+ggplot(aes(x=chlorides, fill = quality), data=reddf) +
+  geom_histogram(color = 'black')
+
+# free.sulfur.dioxide  
+p6 <- ggplot(aes(x=free.sulfur.dioxide ), data=reddf) +
+  geom_histogram(color = 'black', fill = "#0099FF") 
+  
+ggplot(aes(x=free.sulfur.dioxide, fill = quality ), data=reddf) +
+  geom_histogram(color = 'black')
+
+# total.sulfur.dioxide
+p7 <- ggplot(aes(x=total.sulfur.dioxide), data=reddf) +
+  geom_histogram(color = 'black', fill = "#FFCC00")
+
+ggplot(aes(x=total.sulfur.dioxide, fill = quality), data=reddf) +
+  geom_histogram(color = 'black')
+
+# density              
+p8 <- ggplot(aes(x=density), data=reddf) +
+  geom_histogram(color = 'black', fill = "#FF66CC") +
+  scale_x_continuous(breaks = seq(0.990, 1.004, 0.001))
+
+ggplot(aes(x=density, fill = quality), data=reddf) +
+  geom_histogram(color = 'black') +
+  scale_x_continuous(breaks = seq(0.990, 1.004, 0.001))
+
+
+# pH                   
+p9 <- ggplot(aes(x=pH), data=reddf) +
+  geom_histogram(color = 'black', fill = "#00CCFF")
+
+ggplot(aes(x=pH, fill = quality), data=reddf) +
+  geom_histogram(color = 'black')
+
+# sulphates            
+p10 <- ggplot(aes(x=sulphates), data=reddf) +
+  geom_histogram(color = 'black', fill = "#666699")
+
+ggplot(aes(x=sulphates, fill = quality), data=reddf) +
+  geom_histogram(color = 'black')
+
+# alcohol             
+p11 <- ggplot(aes(x=alcohol), data=reddf) +
+  geom_histogram(color = 'black', fill = "#CCCC33")
+
+ggplot(aes(x=alcohol, fill = quality), data=reddf) +
+  geom_histogram(color = 'black')
+
+# quality  
+p12 <- ggplot(aes(x=quality ), data=reddf) +
+  geom_histogram(color = 'black', fill = "#0033CC")
+
+p12
+
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, ncol=4)
+```
+
+These histograms show the distribution of each feature in the dataset. Each of the histogram demonstrates the portion used for each quality. The final grid plot provide a summary.
+
+
+## Re-examine the histograms using different x-scale
+
+Here I use different x-scale to plot the histogram for three attributes.
+Let's have a look of the plots.
+
+```{r different_x_scale, echo=FALSE, message=FALSE, warning=FALSE}
+
+# fixed.acidity
+
+p1_1 <- p1 + ggtitle("Histogram for fixed.acidity")
+p1_2 <- ggplot(aes(x=fixed.acidity), data=reddf) +
+  geom_histogram(color = 'black', fill = "#FF6666") +
+  scale_x_log10(breaks = seq(1,20,1)) +
+  ggtitle("Histogram for fixed.acidity with scale_x_log10")
+
+p1_3 <- ggplot(aes(x=fixed.acidity), data=reddf) +
+  geom_histogram(color = 'black', fill = "#66FF00") +
+  scale_x_sqrt(breaks = seq(4, 16, 1)) +
+  ggtitle("Histogram for fixed.acidity with scale_x_sqrt")
+
+grid.arrange(p1_1, p1_2, p1_3, ncol=1)
+
+```
+
+These three plots shows roughly the same information, except the x axis scale are different.
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+```{r echo=FALSE}
+str(reddf)
+```
+Here I transformed the quality into factor for plotting purpose.
+
+### What is/are the main feature(s) of interest in your dataset?
+
+fixed.acidity
+alcohol
+residual.sugar
+
+These three attributes have big impact to the acid taste and sweet taste. 
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+pH
+
+
+### Did you create any new variables from existing variables in the dataset?
+
+Yes, two new variables are created:
+
+**1. pH.bucket**
+
+pH.bucket is from cutting pH into 5 buckets:
+
+ (2.74,3]  (3,3.25]  (3.25,3.5]  (3.5,3.75]  (3.75,4.01]      
+
+The count of each bucket are following:
+```{r pH_bucket_table, echo=FALSE, message=FALSE, warning=FALSE}
+table(tmp_pH.bucket)
+```
+
+**2. total.acidity**
+
+total.acidity = fixed.acidity + volatile.acidity + citric.acid
+
+Summary of total.acidity
+
+```{r total_acidity, echo=FALSE, message=FALSE, warning=FALSE}
+reddf$total.acidity <- reddf$fixed.acidity + reddf$volatile.acidity + reddf$citric.acid
+
+summary(reddf$total.acidity)
+
+p13 <- ggplot(aes(x=total.acidity), data=reddf) +
+  ggtitle("Histogram 13") +
+  geom_histogram(color = 'black', fill = "#6600FF") +
+  scale_x_continuous(breaks = seq(0, 17, 1))
+
+p13
+
+grid.arrange(p1, p2, p3, p13, ncol=1)
+```
+
+Here we see the fixed.acidity seems to have major influence on the total.acidity which is
+not a surprise.  The quantity for volatile.acidity and citric.acid are much smaller compared to fixed.acidity.
+
+How about the relationship between acidity and pH value?  Let's have a look of the comparsion between fixed.acidity and pH histograms. Here we only use the data from inner quartiles (quartile1 to quartile3) to exclude the possible outliers.  The x axis value is reversed for the pH plot as lower pH value means higher acidity level.
+
+```{r acidity_vs_pH, echo=FALSE, message=FALSE, warning=FALSE}
+
+summary(reddf$fixed.acidity)
+
+p1_4 <- ggplot(aes(x=fixed.acidity), 
+               data=subset(reddf, fixed.acidity <= quantile(fixed.acidity, 0.75) & 
+                             fixed.acidity >= quantile(fixed.acidity, 0.25))) +
+  geom_histogram(color = 'black', fill = "#66CC99", binwidth = 0.1) +
+  scale_x_continuous(breaks = seq(7, 9.3, 0.1))
+
+p1_4
+
+summary(reddf$pH)
+p9_2 <- ggplot(aes(x=pH), 
+               data=subset(reddf, pH <= quantile(pH, 0.75) & 
+                             pH >= quantile(pH, 0.25))) +
+  geom_histogram(color = 'black', fill = "#33CCCC", binwidth = 0.01) +
+  scale_x_reverse(breaks = seq(3.21, 3.40, 0.01))
+
+p9_2
+
+```
+
+Again, the histogram provides only distribution information.  There is no direct relationship can be identified between fixed.acidity and pH value yet.
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+There are two features that posses unusual distributions:
+
+**1. citric.acid**
+
+citric.acid summary and lowest 6 citric.acid level count:
+```{r citric_acid_level_count, echo=FALSE}
+summary(reddf$citric.acid)
+head(table(reddf$citric.acid))
+```
+
+For citric.acid, there are 132 observations having 0 value (out of total 1599 observations).
+
+According to web site Calwineries article (http://www.calwineries.com/learn/wine-chemistry/wine-acids/citric-acid),
+
+"Citric acid plays a major role in the biochemisty of the grape vine and bacteria.... However, its role in wine is far less important.  Most, if not all of the citric acid naturally present in the grapes is consumed by bacteria during fermentation."
+
+"The major disadvantage of adding citric acid is its microbial instability."
+
+This explains why there are 0-level citric.acid.
+
+**2. chlorides**
+
+chlorides summary:
+
+```{r chlorides_check, echo=FALSE}
+summary(reddf$chlorides)
+```
+
+Majority of observations have chlorides level falls under 0.09.  However, the maximum chlorides level reached 0.611 which is more than 7 times of the median.  This could indicate there are some outliers to cause the high maximum chlorides value.
+
+
+
+# Bivariate Plots Section
+
+## Scatterplot matrices
+
+To make the scatterplot matrices more readable, variables are renamed to shorter names for this scatterplot matrices.  The Scatterplot matrices is also stored in a separate file (red_wine_Scatterplot_matrices.JPG) for better viewing.
+
+
+```{r Bivariate_Plots, echo=FALSE, message=FALSE, warning=FALSE}
+
+reddf1 <- reddf
+cols <- c("Indx", "f_acid", "v_acid", "c_acid", "sugar", "CL", "f_SO2", "t_SO2", "density", "pH", "S", "alcohol", "quality", "t_acid")
+colnames(reddf1) <- cols
+ggpairs(reddf1, params = c(shape = I('.'), outlier.shape = I('.')))
+
+# free.sulfur.dioxide vs total.sulfur.dioxide
+
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide), data = reddf) +
+  ggtitle("Normal scatterplot") +
+  geom_point(color="#660000") +
+  xlim(0, quantile(reddf$free.sulfur.dioxide, 0.99)) +
+  ylim(0, quantile(reddf$total.sulfur.dioxide, 0.99))
+
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide), data = reddf) +
+  ggtitle("Jitter scatterplot") +
+  geom_jitter(color="#3300FF") +
+  xlim(0, quantile(reddf$free.sulfur.dioxide, 0.99)) +
+  ylim(0, quantile(reddf$total.sulfur.dioxide, 0.99))
+  
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide), data = reddf) +
+  ggtitle("Jitter scatterplot with smoother") +
+  geom_jitter(color="#006633") +
+  xlim(0, quantile(reddf$free.sulfur.dioxide, 0.99)) +
+  ylim(0, quantile(reddf$total.sulfur.dioxide, 0.99)) + 
+  geom_smooth(color="#339933")
+
+# fixed.acidity and density
+
+# take subset to exclude 1% outliers
+subdf <- subset(reddf, fixed.acidity <= quantile(reddf$fixed.acidity, 0.99) &
+                       density <= quantile(reddf$density, 0.99))
+
+ggplot(aes(x = fixed.acidity, y = density), data = subdf) +
+  ggtitle("Normal scatterplot") +
+  geom_point(color="#660033")
+
+ggplot(aes(x = fixed.acidity, y = density), data = subdf) +
+  ggtitle("Jitter scatterplot") +
+  geom_jitter(color="#3300FF")
+  
+ggplot(aes(x = fixed.acidity, y = density), data = subdf) +
+  ggtitle("Jitter scatterplot with smoother") +
+  geom_jitter(color="#006633") +
+  geom_smooth(color="#339933")
+
+# fixed.acidity and pH
+
+# take subset to exclude 1% outliers
+subdf <- subset(reddf, fixed.acidity <= quantile(reddf$fixed.acidity, 0.99) &
+                       density <= quantile(reddf$pH, 0.99))
+
+ggplot(aes(x = fixed.acidity, y = pH), data = subdf) +
+  ggtitle("Normal scatterplot") +
+  geom_point(color="#660033")
+
+ggplot(aes(x = fixed.acidity, y = pH), data = subdf) +
+  ggtitle("Jitter scatterplot") +
+  geom_jitter(color="#3300FF")
+  
+ggplot(aes(x = fixed.acidity, y = pH), data = subdf) +
+  ggtitle("Jitter scatterplot with smoother") +
+  geom_jitter(color="#006633") +
+  geom_smooth(color="#339933")
+
+# alcohol vs residual.sugar
+
+subdf <- subset(reddf, alcohol <= quantile(reddf$alcohol, 0.99) &
+                       residual.sugar <= quantile(reddf$residual.sugar, 0.99))
+
+ggplot(aes(x = alcohol, y = residual.sugar), data = subdf) +
+  ggtitle("Normal scatterplot") +
+  geom_point(color="#330033")
+
+ggplot(aes(x = alcohol, y = residual.sugar), data = subdf) +
+  ggtitle("Jitter scatterplot") +
+  geom_jitter(color="#663300")
+
+ggplot(aes(x = alcohol, y = residual.sugar), data = subdf) +
+  ggtitle("Jitter scatterplot with smoother") +
+  geom_jitter(color="#003333") +
+  geom_smooth(color="#339933")
+
+# boxplot
+
+ggplot(aes(x = quality, y =fixed.acidity, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =4) +
+  ggtitle("Boxplot of fixed.acidity vs quality with mean marked")
+
+ggplot(aes(x = quality, y =pH, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =5) +
+  ggtitle("Boxplot of pH vs quality with mean marked")
+
+ggplot(aes(x = quality, y =residual.sugar, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =4) +
+  coord_cartesian(ylim = c(1, 6)) +
+  ggtitle("Boxplot of residual.sugar vs quality with mean marked")
+
+ggplot(aes(x = quality, y =alcohol, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =3) +
+  ggtitle("Boxplot of alcohol vs quality with mean marked")
+
+ggplot(aes(x = quality, y =chlorides, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =4) +
+  coord_cartesian(ylim = c(0, 0.2)) +
+  ggtitle("Boxplot of chlorides vs quality with mean marked")
+
+ggplot(aes(x = quality, y =total.sulfur.dioxide, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =2) +
+  coord_cartesian(ylim = c(0, 200)) +
+  ggtitle("Boxplot of total.sulfur.dioxide vs quality with mean marked")
+
+ggplot(aes(x = quality, y =density, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =3) +
+  ggtitle("Boxplot of density vs quality with mean marked")
+
+```
+
+The scatterplot matrices show the correlation of all features. The scatterplots demonstrate correlations for free.sulfur.dioxide/total.sulfur.dioxide, fixed.acidity/density, fixed.acidity/pH and alcohol/residual.sugar.  The boxplots provides the distribution of each feature per quality.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+From the Scatterplot matrices, the following are observed:
+
+1. fixed.acidity and density have positive Correlation Coefficient of 0.668.
+
+2. fixed.acidity and pH have negative Correlation Coefficient -0.683. This is expected as higher acidity will decrease the pH value.
+
+3. The rest of the correlations are weak. None of the features has high correlation with quality directly.
+
+4. The scatterplots with smoother have reinforce the above observations.
+
+5. The boxplots show some interesting points for the wine with high rating quality.  From the boxplots, the following are observed for the quality 8 wines:
+
+   a. Low pH value
+   b. Low residual sugar
+   c. High alcohol
+   d. Low chlorides
+   e. Low total.sulfur.dioxide
+   f. Low density
+   
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+free.sulfur.dioxide and total.sulfur.dioxide have a positive Correlation Coefficient of 0.668. However, this is not a surprise as free.sulfur.dioxide is included in total.sulfur.dioxide.
+
+### What was the strongest relationship you found?
+
+fixed.acidity and pH have the highest Correlation Coefficient -0.683.  Wine makers can adjust the pH level, ie. fixed acidity level, so their wine can satisfy consumer's taste.  In this dataset, the median pH level is 3.310.
+
+
+# Multivariate Plots Section
+
+Note: To give better presentation and avoid confusion, some of the following plots have partial quality value included in one plot.
+
+```{r Multivariate_Plots, echo=FALSE, message=FALSE, warning=FALSE}
+
+reddf$pH.bucket <- tmp_pH.bucket
+
+alcohol_by_pH_quality <- reddf %>%
+  filter(!is.na(quality)) %>%
+  group_by(pH, quality) %>%
+  summarise(mean_alcohol = mean(alcohol),
+            median_alcohol = median(as.numeric(alcohol)),
+            n = n()) %>%
+  ungroup() %>%
+  arrange(pH)
+
+ggplot(aes(x = pH, y =median_alcohol),
+       data = subset(alcohol_by_pH_quality, quality==3 | quality==4 | quality==5  )) + 
+  geom_line(aes(color = quality)) +
+  ggtitle("Plot 3-1: pH vs median_alcohol for quality 3,4,5")
+
+ggplot(aes(x = pH, y =median_alcohol),
+       data = subset(alcohol_by_pH_quality, quality==6 | quality==7 | quality==8  )) + 
+  geom_line(aes(color = quality)) +
+  ggtitle("Plot 3-2: pH vs median_alcohol for quality 6,7,8")
+
+ggplot(aes(x = pH, y =median_alcohol),
+       data = subset(alcohol_by_pH_quality, quality==6 | quality==7 | quality==8  )) + 
+  geom_point(aes(color = quality)) +
+  geom_smooth(aes(color = quality)) +
+  ggtitle("Plot 3-3: pH vs median_alcohol with smoother for quality 6-8 red wine")
+
+ggplot(aes(x = alcohol, y = density),
+       data = subset(reddf, !is.na(pH.bucket))) + 
+  geom_line(aes(color = pH.bucket), stat = 'summary', fun.y = median) +
+  ggtitle("Plot 3-4: alcohol vs median density per pH.bucket") 
+
+ggplot(aes(x = alcohol, y = density),
+       data = subset(reddf, !is.na(pH.bucket))) + 
+  geom_line(aes(color = pH.bucket), stat = 'summary', fun.y = mean) +
+  geom_line(stat = 'summary', fun.y = mean, color = "black", linetype=2) +
+  ggtitle("Plot 3-5: alcohol vs mean density per pH.bucket with grand mean") 
+
+ggplot(aes(x = alcohol, y = density),
+       data = subset(reddf, !is.na(pH.bucket))) +
+  geom_smooth(aes(color = pH.bucket)) +
+  ggtitle("Plot 3-6: alcohol vs density per pH.bucket smoother")
+
+ggplot(aes(x = fixed.acidity, y = alcohol),
+       data = subset(reddf, !is.na(pH.bucket))) +
+  geom_smooth(aes(color = pH.bucket)) +
+  ggtitle("Plot 3-7: fixed.acidity vs alcohol per pH.bucket smoother")
+
+# to be able to use quality in the model, need to transfer from factor back to numeric
+reddf$quality <- as.numeric(levels(reddf$quality))[reddf$quality]
+m1 <- lm(I(quality) ~ I(pH), data = reddf)
+m2 <- update(m1, ~ . + density)
+m3 <- update(m2, ~ . + fixed.acidity)
+m4 <- update(m3, ~ . + alcohol)
+m5 <- update(m4, ~ . + residual.sugar)
+mtable(m1, m2, m3, m4, m5)
+
+# need to transform the quality to factor for boxplot
+reddf$quality <- factor(reddf$quality)
+
+```
+
+Plot 3-1 and 3-2 show the line plot of pH vs median alcohol per quality.  Plot 3-3 uses smoother to show the trend of pH vs median alcohol per quality. Plot 3-4 and 3-5 show alcohol vs median/mean density per pH.bucket.  Plot 3-6 and 3-7 use smoother to show the trend for alcohol vs density and fixed.acidity vs alcohol per pH.bucket. After the plot, the linear model is used to show model summary.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+From plot 3-1, 3-2 and 3-3, it is observed the pH and median_alcohol has positive correlation.
+From plot 3-4 and 3-5, it is observed the alcohol and density has negative correlation.
+
+### Were there any interesting or surprising interactions between features?
+
+In plot 3-6, the line for lowest pH.bucket are in big density range and accross the full alcohol range. For this lowest pH.bucket line, when it comes to high alcohol range, the density comes down to it lowest range. Compare this observation with previous observations from boxplot, they matches with the observatons from quality 8.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+Yes, I did create a model. The strength is it has low p value. However, the R-squared is quite low.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r Plot_One, echo=FALSE, message=FALSE, warning=FALSE }
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, ncol=4)
+```
+
+### Description One
+
+This is the grid of histograms of all features.  It show the distribution of each feature in the dataset. This plot provides the general idea about the dataset variable distribution, rather than detailed propotion of each feature.
+
+### Plot Two
+```{r Plot_Two, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = quality, y =alcohol, fill = quality),
+       data = subset(reddf, !is.na(quality))) + geom_boxplot() +
+  stat_summary(fun.y = mean, geom = 'point', shape =3) +
+  ggtitle("Boxplot of alcohol vs quality with mean marked")
+```
+
+### Description Two
+
+This plot clearly demonstrates the relationship between alcohol and quality.  Even though the quality depends on other features as well, the plot shows the higher alcohol level is correlated to higher quality value in general.
+
+### Plot Three
+```{r Plot_Three, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = pH, y =median_alcohol),
+       data = subset(alcohol_by_pH_quality, quality==6 | quality==7 | quality==8  )) + 
+  geom_point(aes(color = quality)) +
+  geom_smooth(aes(color = quality)) +
+  ggtitle("Plot 3-3: pH vs median_alcohol with smoother for quality 6-8 red wine")
+```
+
+### Description Three
+
+This plot shows the pH vs median_alcohol trend. Same observation from earlier plot repeats here - higher alcohol level linked to higher quality value for the same pH value.
+
+------
+
+# Reflection
+
+It is a interesting subject to explore using the Data Analysis we learnt in this course. Without knowing much about the relationship between features, it was a bit hard to pick the features of interest in the begining.  However, once I went through the Univariate, bivariate and multivariate ploting involving different feature combinations, the picture is more clear. Even though there is no definite conclusion from the analysis, a few key observations did provide us a good picture for the relationship of quality and interested features.  There are still a lot of plotting technics we have not applied during the course yet.  Even though the dataset provides only limited features in red wine, I believe with further exploring using more plotting technics, we can be more certain about the relationship between quality and features.
